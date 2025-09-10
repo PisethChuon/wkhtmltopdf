@@ -1,0 +1,36 @@
+
+.avoid-page-break-inside {
+    page-break-inside: avoid !important;
+}
+
+.fcn_tb td {
+    text-align: center ;
+}
+
+table {
+    page-break-inside: auto;
+    border-collapse: collapse;
+    width: 100%;
+    border: 1px solid rgb(104, 104, 104); /* outer border */
+}
+
+thead {
+    display: table-header-group; /* repeat the header */
+}
+
+tfoot {
+    display: table-row-group; /* repeat footer if needed */
+}
+
+tr {
+    page-break-inside: avoid; /* don’t break rows */
+    /*page-break-after: auto;*/
+}
+
+th, td {
+    border: 1px solid rgb(104, 104, 104); /* cell borders */
+    padding: 6px; /* some spacing for readability */
+    text-align: left; /* or center if you prefer */
+    page-break-inside: avoid; /* keep cell content together */
+    white-space: normal;
+}

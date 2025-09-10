@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="custom_paperformat_venue_booking" model="report.paperformat">
+        <field name="name">Custom Venue Booking A4</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">40</field>
+        <field name="margin_bottom">20</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_spacing">35</field>
+        <field name="header_line" eval="False"/>
+    </record>
+
+    <!-- Report Action -->
+    <record id="action_report_venue_booking_order" model="ir.actions.report">
+        <field name="name">BANQUET EVENT ORDER</field>
+        <field name="model">banquet.event.order</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">banquet.report_venue_booking_order</field>
+        <field name="report_file">banquet.report_venue_booking_order</field>
+        <field name="print_report_name">(object._get_report_base_filename())</field>
+        <field name="paperformat_id" ref="custom_paperformat_venue_booking"/>
+        <field name="attachment" />
+        <field name="binding_model_id" eval="False" />
+        <field name="binding_type">report</field>
+    </record>
+
+
+
+    <template id="venue_booking_report_layout">
+        <t t-if="not o" t-set="o" t-value="doc" />
+
+        <t t-if="not company">
+            <!-- Multicompany -->
+            <t t-if="company_id">
+                <t t-set="company" t-value="company_id" />
+            </t>
+            <t t-elif="o and 'company_id' in o and o.company_id.sudo()">
+                <t t-set="company" t-value="o.company_id.sudo()" />
+            </t>
+            <t t-else="else">
+                <t t-set="company" t-value="res_company" />
+            </t>
+        </t>
+        <div class="row header">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <div>
+<!--                        <img t-if="company.logo" class="o_company_logo mb-2" t-att-src="image_data_uri(company.logo)" alt="Logo"/>-->
+                    </div>
+                    <div name="company_address" class="text-end">
+                        <ul class="list-unstyled" name="company_address_list">
+                            <div t-if="header">
+                                <t t-out="header"/>
+                            </div>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="article" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-out="0"/>
+        </div>
+        <div t-attf-class="footer o_company_#{company.id}_layout {{report_type != 'pdf' and 'mt-auto'}}">
+            <div class="o_footer_content border-top pt-2 text-center">
+                <div t-if="report_type == 'pdf' and display_name_in_footer" class="text-muted" t-out="o.name">(document
+                    name)
+                </div>
+                <div t-if="report_type == 'pdf'" class="text-muted">Page
+                    <span class="page"/>
+                    of
+                    <span class="topage"/>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!--    Report Template-->
+    <template id="report_venue_booking_order">
+
+        <div class="bk_order">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.html_container">
+                    <t t-call="banquet.venue_booking_report_layout">
+                        <t t-set="doc" t-value="doc.with_context(lang=doc.partner_id.lang)"/>
+                        <t t-set="header">
+                            <li>
+                                <h4>
+                                    <t t-if="doc.has_been_modified_before">
+                                        <span style="color: red;">BANQUET EVENT ORDER</span>
+                                    </t>
+                                    <t t-else="">
+                                        <span>BANQUET EVENT ORDER</span>
+                                    </t>
+                                </h4>
+                                <h4>
+                                    <t t-if="doc.has_been_modified_before">
+                                        <span style="color: red;">BEO Amendment #:
+                                            <span t-esc="(doc.beo_amendment_number or doc.sequence_order or doc.name).replace('B', '')"/>
+                                        </span>
+                                    </t>
+                                    <t t-else="">
+                                        <span>BEO #:
+                                            <span t-esc="(doc.beo_amendment_number or doc.sequence_order or doc.name).replace('B', '')"/>
+                                        </span>
+                                    </t>
+                                </h4>
+                            </li>
+                            <li>
+                                <t t-if="doc.has_been_modified_before">
+                                    <span style="color: red;">Printed on
+                                        <span t-out="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d - %H:%M:%S')"/>
+                                    </span>
+                                </t>
+                                <t t-else="">
+                                    <span class="text-muted">Printed on
+                                        <span t-out="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d - %H:%M:%S')"/>
+                                    </span>
+                                </t>
+                            </li>
+                        </t>
+                        <!-- Customer Info -->
+                        <table class="table table-bordered">
+                            <tr>
+                                <td>Company:</td>
+                                <td>
+                                    <span t-field="doc.partner_id"/>
+                                </td>
+                                <td>Booker:</td>
+                                <td>
+                                    <span t-field="doc.booking_by_id"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">Address:</td>
+                                <td rowspan="2">
+                                    <span t-field="doc.partner_id.contact_address"/>
+                                </td>
+                                <td>Contact No:</td>
+                                <td>
+                                    <span t-field="doc.partner_id.phone"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Segment:</td>
+                                <td>
+                                    <span t-field="doc.signage"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Sale Contact</td>
+                                <td>
+                                    <span t-field="doc.user_id" t-options='{"widget": "contact", "fields": ["name", "phone"], "no_marker": True}'/>
+                                </td>
+                                <td>On-Site Contact</td>
+                                <td>
+                                    <span t-field="doc.onsite_contact_id"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Operate Person</td>
+                                <td>
+                                    <span t-field="doc.operate_person_id" t-options='{"widget": "contact", "fields": ["name","phone"], "no_marker": True}'/>
+                                </td>
+                                <td>Group Folio Name</td>
+                                <td>
+                                    <span t-field="doc.group_folio_name"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Event Date -->
+                        <table class="table table-bordered">
+                            <tr>
+                                <td class="text-center">
+                                    <h3 class="text-uppercase" t-out="doc.event_date"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Function Timeline -->
+                        <table class="table table-bordered avoid-page-break-inside fcn_tb">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-center text-nowrap">Start Time</th>
+                                    <th class="text-uppercase text-center text-nowrap">End Time</th>
+                                    <th class="text-uppercase text-center text-nowrap">Function</th>
+                                    <th class="text-uppercase text-center text-nowrap">Venue</th>
+                                    <th class="text-uppercase text-center text-nowrap">Setup</th>
+                                    <th class="text-uppercase text-center text-nowrap">GTD</th>
+                                    <th class="text-uppercase text-center text-nowrap">EXP</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="doc.function_ids" t-as="fn">
+                                    <tr>
+                                        <td>
+                                            <span t-field="fn.start_time" t-options='{"widget": "float_time"}'/>
+                                        </td>
+                                        <td>
+                                            <span t-field="fn.end_time" t-options='{"widget": "float_time"}'/>
+                                        </td>
+                                        <td>
+                                            <span t-field="fn.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-field="fn.venue_id.name"/>
+                                        </td>
+                                        <td>
+                                            <t t-if="fn.setup_style">
+                                                <span t-field="fn.setup_style"/>
+                                            </t>
+                                            <t t-else="">-</t>
+                                            <!-- <span t-if="fn.remarks != ''">(<span t-field="fn.remarks" />)</span> -->
+                                        </td>
+                                        <td>
+                                            <t t-if="fn.gtd_count != 0">
+                                                <span t-field="fn.gtd_count"/>
+                                            </t>
+                                            <t t-else="">-</t>
+                                        </td>
+                                        <td>
+                                            <t t-if="fn.expected_count != 0">
+                                                <span t-field="fn.expected_count"/>
+                                            </t>
+                                            <t t-else="">-</t>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <!-- Page Break for Menu Section -->
+                        <div style="page-break-before: always;"></div>
+                        
+                        <!-- Menu & Setup -->
+                        <table class="table table-bordered avoid-page-break-inside">
+                            <thead style="display: table-row-group; border-bottom: 1px solid black;">
+                                <tr>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Menu
+                                            Section</th>
+                                    <th class="text-uppercase text-center text-nowrap w-50">BANQUET</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="p-5">
+<!--                                        <b>Menu Set:</b>-->
+                                        <ul>
+                                            <t t-foreach="doc.menu_line_ids" t-as="menu">
+                                                <t t-set="description" t-value="menu.description or menu.name" />
+
+                                                <div t-if="menu.display_type in ['line_section']">
+                                                    <h5 class="text-center">
+                                                        <span t-field="menu.name" />
+                                                    </h5>
+                                                    <hr />
+                                                </div>
+                                                <div t-else="">
+                                                    <li>
+                                                        <div class="d-flex justify-content-between">
+                                                            <span t-out="description" />
+                                                            <span>Time: <t t-esc="menu.time_to_serve.name" />
+                                                            </span>
+                                                        </div>
+                                                    </li>
+                                                </div>
+                                            </t>
+                                        </ul>
+                                        <hr />
+                                        <b>Chef to Note:</b>
+                                        <div t-field="doc.chef_notes" />
+                                        <br/>
+                                        <b>Remarks:</b>
+                                        <div t-field="doc.chef_remarks" />
+                                        <hr />
+                                    </td>
+                                    <td style="vertical-align: top; padding:8px; word-wrap: break-word; overflow-wrap: break-word;">
+                                        <div>
+                                            <div t-field="doc.banquet_setup"/>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <table class="table table-bordered avoid-page-break-inside">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Audio
+                                            Visual</th>
+                                    <th class="text-uppercase text-center text-nowrap w-50">
+                                            Housekeeping</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div t-field="doc.audio_visual" />
+                                    </td>
+                                    <td>
+                                        <div t-field="doc.housekeeping" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered avoid-page-break-inside">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Beverage</th>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Florist</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div t-field="doc.beverage"/>
+                                    </td>
+                                    <td>
+                                        <div t-field="doc.florist"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered avoid-page-break-inside">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Signage</th>
+                                    <th class="text-uppercase text-center text-nowrap w-50">I.T.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div t-field="doc.signage"/>
+                                    </td>
+                                    <td>
+                                        <ul>
+                                            <t t-foreach="doc.it_ids" t-as="it">
+                                                <li>
+                                                    <t t-esc="it.banquet_it_request_id.display_name"/>
+                                                </li>
+                                            </t>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered avoid-page-break-inside">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Front
+                                        Office
+                                    </th>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Security</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <ul>
+                                            <t t-foreach="doc.front_office_ids" t-as="front">
+                                                <li>
+                                                    <t t-esc="front.banquet_front_office_id.display_name"/>
+                                                </li>
+                                            </t>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <ul>
+                                            <t t-foreach="doc.security_ids" t-as="security">
+                                                <li>
+                                                    <t t-esc="security.banquet_security_request_id.display_name"/>
+                                                </li>
+                                            </t>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <table class="table table-bordered avoid-page-break-inside">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Billing
+                                        Instruction
+                                    </th>
+                                    <th class="text-uppercase text-center text-nowrap w-50">Internal
+                                        Breakdown
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div t-field="doc.billing_instruction"/>
+                                    </td>
+                                    <td>
+                                        <div t-field="doc.internal_breakdown"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div>
+                            <p>The above number will be considered the guaranteed number that you
+                                will
+                                be charged for unless
+                                you notify the Catering
+                                Department at least 3 working days prior to your function.
+                            </p>
+                            <!-- Signatures -->
+                            <div class="d-flex flex-row justify-content-between">
+                                <p>Authorized Signatory: __________________________</p>
+                                <p>Date: __________________________</p>
+                            </div>
+                            <p class="text-muted">
+                                Prices are inclusive of 10% service charge and prevailing government
+                                tax
+                                on the day of your
+                                event.
+                            </p>
+                        </div>
+                        <!-- attachtment sectoin -->
+                        <!-- attachment section -->
+                        <!-- <div class="layout-container" style="width: 100%;">
+                                <t t-if="attachment_images">
+                                    <t t-foreach="attachment_images" t-as="att">
+                                        <div class="layout-page" style="page-break-before: always; text-align:center;">
+                                            <img t-att-src="'data:image/png;base64,%s' % att['data']" style="width: 100%; max-width: 100%; height: auto;" />
+                                        </div>
+                                    </t>
+                                </t>
+                            </div> -->
+
+                    </t>
+                </t>
+            </t>
+        </div>
+    </template>
+</odoo>
