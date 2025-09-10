@@ -1,8 +1,8 @@
-# wkhtmltopdf Project
+# wkhtmltopdf
 
 ## Images
 
-### Page 2
+### Page
 
 ![Page 2](/assets/page2.png)
 
