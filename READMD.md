@@ -2,7 +2,7 @@
 
 ## Images
 
-### Page
+### Page 2
 
 ![Page 2](/assets/page2.png)
 
